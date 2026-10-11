@@ -18,9 +18,11 @@ import {
   DraftProofOfWorkPostInputSchema,
   PassiveVisibilityPlanInputSchema,
   HumanizeContentInputSchema,
+  AuditLinkedInPageInputSchema,
 } from '../contracts/profile-schema.js';
 import { ingestProfileDocument } from '../ingestion/pdf-extractor.js';
 import { evaluateProfileAts } from '../analytics/ats-engine.js';
+import { auditLinkedInLandingPage } from '../analytics/linkedin-scorer.js';
 import { analyzeKeywordGapEngine } from '../analytics/keyword-analyzer.js';
 import {
   synthesizeSectionPatchEngine,
@@ -658,6 +660,54 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
             {
               type: 'text',
               text: `Failed to load workflow preset: ${err.message || String(err)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  },
+
+  audit_linkedin_page: {
+    name: 'audit_linkedin_page',
+    description:
+      'Evaluates candidate profile as a searchable LinkedIn SEO landing page (0-100) across headline hook, above-the-fold About copy, proof-of-work metrics, skills alignment, and 30-day activity recency.',
+    parameters: {
+      profile: z
+        .any()
+        .describe('LinkedIn profile object or serialized JSON string to evaluate'),
+      targetRole: z
+        .string()
+        .optional()
+        .describe('Optional target job title or specialization (e.g. "Senior Backend Engineer")'),
+      activityDaysAgo: z
+        .number()
+        .optional()
+        .describe('Days since last public activity or post (defaults to checking current role recency)'),
+      recentPostText: z
+        .string()
+        .optional()
+        .describe('Optional text of most recent post to verify 30-day activity status'),
+    },
+    handler: async (args: unknown): Promise<McpToolResponse> => {
+      try {
+        const validated = AuditLinkedInPageInputSchema.parse(args);
+        const result = auditLinkedInLandingPage(validated.profile, {
+          targetRole: validated.targetRole,
+          activityDaysAgo: validated.activityDaysAgo,
+          recentPostText: validated.recentPostText,
+        });
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: false,
+        };
+      } catch (err: any) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Failed to audit LinkedIn landing page: ${err.message || String(err)}`,
             },
           ],
           isError: true,

@@ -2,6 +2,7 @@
 export * from './contracts/profile-schema.js';
 export * from './ingestion/pdf-extractor.js';
 export * from './analytics/ats-engine.js';
+export * from './analytics/linkedin-scorer.js';
 export * from './analytics/keyword-analyzer.js';
 export * from './analytics/keyword-gap.js';
 export * from './visibility/humanizer.js';

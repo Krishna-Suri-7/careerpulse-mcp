@@ -183,6 +183,7 @@ CareerPulse exposes 6 core tools alongside dedicated utility and bridge helpers:
 | `draft_proof_of_work_post` | Transforms commit notes or technical trade-offs into a concise LinkedIn post under 180 words. | `technicalNotes`, `type`, `githubUrl`, `metrics` |
 | `generate_passive_visibility_plan` | Builds a 30-day schedule (2 technical posts + 4 comments) to activate recruiter discovery filters. | `targetRole`, `primaryTechStack`, `cadenceDays` |
 | `humanize_content` | Strips predictable AI clichés (*"delve"*, *"testament"*, *"supercharge"*) from engineering text. | `text`, `targetAudience` |
+| `audit_linkedin_page` | Evaluates LinkedIn profile as a searchable SEO landing page (0–100) across headline SEO, above-the-fold hook, metrics, and activity. | `profile`, `targetRole`, `activityDaysAgo`, `recentPostText` |
 | `synthesize_section_patch` | Target-specific section rewriter applying XYZ metric formulas to Headline, About, or Experiences. | `section`, `currentContent`, `metrics`, `keywords` |
 | `render_change_diff` | Produces unified or side-by-side Markdown diffs for any proposed text revisions. | `originalText`, `proposedText`, `format` |
 | `get_workflow_preset` | Fallback bridge tool allowing clients lacking native MCP Prompt UI to trigger guided workflows. | `workflow` |

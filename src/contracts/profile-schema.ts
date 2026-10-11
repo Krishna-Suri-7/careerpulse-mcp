@@ -463,3 +463,13 @@ export const HumanizeContentInputSchema = z.object({
 
 export type HumanizeContentInput = z.infer<typeof HumanizeContentInputSchema>;
 
+// Tool: audit_linkedin_page
+export const AuditLinkedInPageInputSchema = z.object({
+  profile: RawProfileInputSchema.describe('Candidate profile object or serialized JSON string to evaluate as a LinkedIn landing page'),
+  targetRole: z.string().optional().describe('Optional target job title or specialization (e.g. "Senior Backend Engineer")'),
+  activityDaysAgo: z.number().optional().describe('Days since last public activity or post (defaults to checking current role recency)'),
+  recentPostText: z.string().optional().describe('Optional text of most recent post to verify 30-day activity status'),
+});
+
+export type AuditLinkedInPageInput = z.infer<typeof AuditLinkedInPageInputSchema>;
+
