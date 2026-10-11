@@ -46,8 +46,10 @@ Technical hiring is broken on both ends of the funnel:
 
 ### How CareerPulse Solves This
 
-- **100% Local & Offline**: Operates strictly on standard LinkedIn profile export PDFs (downloaded via LinkedIn's built-in *"More → Save to PDF"* feature) or JSON/Markdown resumes. Zero network requests are sent to LinkedIn, requiring no cookies, passwords, or cloud syncing.
-- **Deterministic ATS Scoring (0–100)**: Evaluates quantifiable metrics, action verb strength, and role density with mathematical precision.
+- **100% Local & Offline**: Operates strictly on standard LinkedIn profile export PDFs (downloaded via LinkedIn's official *"More → Save to PDF"* feature) or JSON/Markdown resumes. Zero network requests are sent to LinkedIn, requiring no cookies, passwords, or cloud syncing.
+- **Why LinkedIn Links Fail & How Local Ingestion Solves It**: LinkedIn blocks headless browser scraping and protects profiles behind login/auth walls and Cloudflare checks. By reading your official LinkedIn PDF export locally via `pdf-parse`, Claude accesses complete, authentic profile data without risking account shadowbans or CAPTCHAs.
+- **Modern 5-Pillar ATS Scoring (0–100)**: Evaluates profiles across Quantified Impact & Scale (30%), Contextual Hard-Skill Integration (25%), Action Verb Ownership (20%), Structural Parseability (15%), and Recruiter Search Targeting (10%).
+- **LinkedIn Landing Page SEO Engine (0–100)**: Evaluates your profile as a high-converting search landing page across Headline SEO (25%), Above-the-Fold About Copy (20%), Proof-of-Work Metrics (30%), Skills Graph Relevance (15%), and 30-Day Activity Recency (10%).
 - **Zero-Cringe Proof of Work (<180 Words)**: Translates real commits, bug post-mortems, and architecture trade-offs into high-credibility engineering posts that technical hiring managers appreciate.
 - **Passive Visibility Roadmap**: Creates a structured 30-day schedule (2 technical posts and 4 targeted comments) that keeps the LinkedIn Recruiter "Active Talent" spotlight illuminated with **under 15 minutes of effort per week**.
 
@@ -57,8 +59,9 @@ Technical hiring is broken on both ends of the funnel:
 
 | Feature | Description | Engine / Module |
 | :--- | :--- | :--- |
-| **Local PDF & JSON Ingestion** | Section-aware parser extracting Experience, Education, and Skills from LinkedIn export PDFs or resume JSON into typed contracts. | `src/ingestion/pdf-extractor.ts` |
-| **Quantifiable ATS Audit (0–100)** | Deterministic evaluation scoring profiles across Impact Metrics (40%), Action Verb Strength (30%), and Completeness & Density (30%). | `src/analytics/ats-engine.ts` |
+| **Local PDF & JSON Ingestion** | Section-aware parser extracting Experience, Education, and Skills from LinkedIn export PDFs or resume JSON into typed contracts without network scraping. | `src/ingestion/pdf-extractor.ts` |
+| **5-Pillar ATS Audit (0–100)** | Mathematical evaluation across Quantified Impact (30 pts), Hard-Skill Integration (25 pts), Action Verb Strength (20 pts), Structural Parseability (15 pts), and Recruiter Search Targeting (10 pts). | `src/analytics/ats-engine.ts` |
+| **LinkedIn Landing Page SEO (0–100)** | Evaluates candidate presence as a high-converting landing page: Headline SEO (25 pts), Above-the-Fold Hook (20 pts), Proof-of-Work (30 pts), Skills Graph (15 pts), and 30-day Recruiter Activity Recency (10 pts). | `src/analytics/linkedin-scorer.ts` |
 | **Semantic Keyword Gap Analysis** | $O(n)$ n-gram tokenization and skill extraction comparing candidate experience against 1–3 target JDs, returning hard/soft gaps and recruiter boolean search strings. | `src/analytics/keyword-analyzer.ts` |
 | **Google XYZ Bullet Patching** | Rewrites weak experience bullets into high-impact XYZ statements (*Accomplished [X], as measured by [Y], by doing [Z]*). | `src/patching/diff-patcher.ts` |
 | **Unified Markdown Diffs** | Renders line-by-line and side-by-side Git-style markdown diffs showing exactly what changed between old and new profile copy. | `src/patching/diff-patcher.ts` |
@@ -88,7 +91,8 @@ flowchart TD
     end
 
     subgraph "Engine Layer (Deterministic & Pure Analytics)"
-        Tools --> AtsEngine["ATS Readiness Engine (ats-engine.ts)"]
+        Tools --> AtsEngine["5-Pillar ATS Engine (ats-engine.ts)"]
+        Tools --> LiEngine["LinkedIn Landing Page Scorer (linkedin-scorer.ts)"]
         Tools --> GapEngine["Keyword & N-Gram Analyzer (keyword-analyzer.ts)"]
         Tools --> HumanEngine["Anti-Slop Humanizer (humanizer.ts)"]
         Tools --> PowEngine["Proof of Work Synthesizer (proof-of-work.ts)"]
@@ -98,6 +102,7 @@ flowchart TD
         IngestAdapter -.-> ZodSchemas["Profile & Domain Contracts (profile-schema.ts)"]
         DiffAdapter -.-> ZodSchemas
         AtsEngine -.-> ZodSchemas
+        LiEngine -.-> ZodSchemas
         GapEngine -.-> ZodSchemas
         HumanEngine -.-> ZodSchemas
         PowEngine -.-> ZodSchemas
@@ -113,12 +118,13 @@ flowchart TD
    - `prompt-registry.ts`: Exposes 1-click interactive prompt presets via `ListPromptsRequestSchema` and `GetPromptRequestSchema`, generating structured LLM system prompts without requiring users to memorize CLI flags.
 3. **Engines (`src/analytics/` & `src/visibility/`)**:
    Pure functional core algorithms without side effects:
-   - `ats-engine.ts`: Pure functional scoring logic for metric presence, action verbs, and section completeness.
+   - `ats-engine.ts`: Modern 5-pillar mathematical ATS scoring logic (metrics, skills, verbs, structural density, targeting).
+   - `linkedin-scorer.ts`: LinkedIn profile landing page SEO evaluator (headline hook, above-the-fold About copy, proof-of-work metrics, skills graph, 30-day activity).
    - `keyword-analyzer.ts` & `keyword-gap.ts`: N-gram tokenizers and stopword filters computing frequency-based skill overlaps and recruiter boolean queries.
    - `humanizer.ts`: Cliché replacement rules and tone enforcement.
    - `proof-of-work.ts`: Generates structured technical narratives from commit summaries.
 4. **Adapters (`src/ingestion/` & `src/patching/`)**:
-   - `pdf-extractor.ts`: Wraps `pdf-parse` to convert messy PDF text streams into structured candidate profiles.
+   - `pdf-extractor.ts`: Wraps `pdf-parse` to convert messy PDF text streams into structured candidate profiles without external network scraping.
    - `diff-patcher.ts`: Unified diff formatter generating standard Git-style additions and deletions (`+` / `-`).
 5. **Server Entrypoint (`src/server.ts`)**:
    Instantiates `@modelcontextprotocol/sdk` with `{ capabilities: { tools: {}, prompts: {} } }`, connects via `StdioServerTransport`, and configures clean `SIGINT` / `SIGTERM` teardown handlers.
@@ -135,7 +141,8 @@ careerpulse-mcp/
 │   ├── ingestion/
 │   │   └── pdf-extractor.ts         # Section-aware parser for LinkedIn export PDFs and JSON
 │   ├── analytics/
-│   │   ├── ats-engine.ts            # Deterministic 0-100 ATS scanner (metrics, action verbs, density)
+│   │   ├── ats-engine.ts            # Modern 5-pillar 0-100 ATS scanner (metrics, skills, verbs, density)
+│   │   ├── linkedin-scorer.ts       # 100-pt LinkedIn profile landing page SEO & hook engine
 │   │   ├── keyword-analyzer.ts      # High-performance O(n) n-gram tokenization & boolean query engine
 │   │   └── keyword-gap.ts           # Skill gap analyzer comparing candidate profile against JDs
 │   ├── patching/
@@ -154,6 +161,7 @@ careerpulse-mcp/
 ├── tests/
 │   ├── unit/                        # Dedicated Vitest unit test suites (>90% test coverage)
 │   │   ├── ats-engine.test.ts
+│   │   ├── linkedin-scorer.test.ts
 │   │   ├── keyword-analyzer.test.ts
 │   │   ├── keyword-gap.test.ts
 │   │   ├── pdf-extractor.test.ts
@@ -319,9 +327,10 @@ npm run demo
 ### Test Suite Results
 
 ```text
-✓ tests/unit/ats-engine.test.ts (13 tests)
-✓ tests/unit/keyword-gap.test.ts (2 tests)
+✓ tests/unit/ats-engine.test.ts (23 tests)
+✓ tests/unit/linkedin-scorer.test.ts (20 tests)
 ✓ tests/unit/keyword-analyzer.test.ts (10 tests)
+✓ tests/unit/keyword-gap.test.ts (2 tests)
 ✓ tests/unit/contracts.test.ts (9 tests)
 ✓ tests/schemas.test.ts (17 tests)
 ✓ tests/tools/rewriteSection.test.ts (4 tests)
@@ -338,8 +347,8 @@ npm run demo
 ✓ tests/tools/exportProfileDiff.test.ts (3 tests)
 ✓ tests/index.test.ts (1 test)
 
-Test Files  18 passed (18)
-     Tests  128 passed (128)
+Test Files  19 passed (19)
+     Tests  158 passed (158)
   Coverage  >90% statements covered
 ```
 
