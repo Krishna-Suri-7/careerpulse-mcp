@@ -216,7 +216,7 @@ CareerPulse implements the **MCP Prompt Registry** protocol (`prompts/list` and 
 Clone and compile the server locally:
 
 ```bash
-git clone https://github.com/<your-username>/careerpulse-mcp.git
+git clone https://github.com/Krishna-Suri-7/careerpulse-mcp.git
 cd careerpulse-mcp
 npm install
 npm run build
